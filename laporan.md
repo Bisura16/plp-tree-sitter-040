@@ -213,6 +213,34 @@ Bukti warna yang sama dengan capture dari contoh (`true` dan `2` sama-sama cokel
 
 ![boolean sama](ss/t5_boolean_sama.png)
 
+## Tugas 6 — Mini proyek: pendeteksi TODO dan fungsi panjang
+
+`cek/cek.py <folder>` memeriksa semua file `.py` di sebuah folder dengan tree-sitter dan melaporkan tiga hal: (1) komentar `TODO`/`FIXME` lewat query `#match?`, (2) fungsi yang lebih dari 30 baris lewat `matches` dan `end_point[0] - start_point[0] + 1`, serta (3) file yang pohonnya error lewat `root_node.has_error`, lengkap dengan baris pertama yang bermasalah (fungsi rekursif mencari node `is_error` atau `is_missing`). Folder `venv`, `.git`, `node_modules`, dan sejenisnya dilewati. Cara pakai ada di `cek/README.md`.
+
+**Uji kecil** (`cek/uji/`): `todo.py`, `panjang.py` (37 baris), dan `rusak.py` (tanpa `:`) menghasilkan satu temuan sesuai tiap file.
+
+**Uji pada repo nyata** (`psf/requests`, 37 file `.py`): hasil lengkap di `cek/output_requests.txt`.
+
+![hasil requests](ss/t6_requests.png)
+
+**Pencocokan manual pada 2 file**
+
+| File | Hasil `cek.py` | Pengecekan manual |
+| --- | --- | --- |
+| `src/requests/hooks.py` | satu TODO di baris 29 | satu TODO di baris 29 |
+| `src/requests/api.py` | `request` (48 baris) di baris 24 | fungsi mulai baris 24, berakhir baris 71: 71 - 24 + 1 = 48 |
+
+![hooks](ss/t6_manual_hooks.png)
+
+![api](ss/t6_manual_api.png)
+
+**Kendala dan cara mengatasinya**
+
+- Fungsi bersarang dan metode kelas ikut terhitung dalam laporan fungsi panjang, sesuai petunjuk soal. Hal ini dicatat di README.
+- Karakter non-UTF-8 bisa membuat `UnicodeDecodeError`. Saya memakai `decode(errors="replace")`.
+- Pada repo besar, folder seperti `venv/` dan `.git/` dilewati dengan memeriksa `path.parts` sebelum memanggil `cek_file`.
+- Output PowerShell dengan `>` tersimpan sebagai UTF-16, jadi hasilnya disimpan lewat `Out-File -Encoding utf8`.
+
 ## Catatan penggunaan AI
 
 | Tugas | Yang diminta | Kesalahan AI | Bukti verifikasi |
@@ -222,5 +250,6 @@ Bukti warna yang sama dengan capture dari contoh (`true` dan `2` sama-sama cokel
 | 3 | Query fungsi + parameter, `print`, dan import | Query import tidak menangkap `import numpy as np`, karena node-nya `aliased_import`, bukan `dotted_name` langsung. | Menjalankan `query.py` pada `uji_import.py`: 5 modul diimpor, program hanya menampilkan 4 (`numpy` hilang). |
 | 4 | Langkah 4a–4f, `in_expression`, dan `contains_expression` pada grammar `filter` | Grammar tidak menerima angka negatif, karena `number` hanya `/\d+(\.\d+)?/` tanpa tanda minus. | `tree-sitter parse` pada `priority > -1` menghasilkan node `ERROR` di posisi `-` (`ss/t4_negatif.png`). |
 | 5 | Isi `highlights.scm` dan konfigurasi highlight | Contoh capture boolean `@constant.builtin` membuat `true` dan angka `2` berwarna sama di tema bawaan CLI, sehingga token tidak bisa dibedakan. | `tree-sitter highlight contoh.filter` dengan capture itu: `true` dan `2` sama-sama cokelat tebal (`ss/t5_boolean_sama.png`). Diganti `@type.builtin`. |
+| 6 | Kerangka `cek.py` dan tiga fitur | Query TODO `#match? @c "TODO|FIXME"` tidak memakai batas kata: komentar `# MASTODON ...` salah dilaporkan sebagai TODO, sedangkan `# todo` huruf kecil tidak terdeteksi. | Menjalankan `cek.py` pada `uji/palsu.py`: baris 1 salah dilaporkan, baris 2 terlewat (`ss/t6_palsu.png`). |
 
 Catatan: pohon perkiraan tulisan tangan di Tugas 1 dibuat berdasarkan jawaban AI, lalu saya verifikasi dengan menjalankan `t1.py` sendiri.

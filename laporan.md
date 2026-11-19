@@ -97,54 +97,6 @@ Saya menulis query `.scm` dan menjalankannya dengan `QueryCursor` lewat `query.p
 - Nama node untuk import tidak ditebak: saya menjalankan `jelajah.py` pada `contoh.py` lebih dulu. Hasilnya `import_statement` (field `name:`) dan `import_from_statement` (field `module_name:`), keduanya berisi `dotted_name`.
 - `import_from_statement` punya dua `dotted_name`: `module_name:` (modul, misalnya `pathlib`) dan `name:` (yang diimpor, misalnya `Path`). Memakai field `module_name:` memastikan hanya modulnya yang tertangkap.
 
-**Kendala:** untuk jumlah parameter, `captures` tidak bisa memasangkan nama fungsi dengan parameternya, jadi saya beralih ke `matches` dan membaca `cap["params"][0].named_child_count`.## Tugas 3 — Query pertama
-
-Saya menulis query `.scm` dan menjalankannya dengan `QueryCursor` lewat `query.py` (untuk `captures`) dan `query_params.py` (untuk `matches`) pada file uji `contoh.py`.
-
-**Query 1: nama fungsi dan jumlah parameternya** (`params.scm`)
-
-```scheme
-(function_definition
-  name: (identifier) @nama
-  parameters: (parameters) @params)
-```
-
-![params](ss/t3_params.png)
-
-**Query 2: pemanggilan `print(...)`** (`print.scm`)
-
-```scheme
-(call
-  function: (identifier) @fn
-  arguments: (argument_list) @args
-  (#eq? @fn "print"))
-```
-
-![print](ss/t3_print.png)
-
-**Query 3: import dan from-import, dicetak nama modulnya** (`import.scm`)
-
-```scheme
-(import_statement name: (dotted_name) @modul)
-(import_from_statement module_name: (dotted_name) @modul)
-```
-
-![import](ss/t3_import.png)
-
-**Pencocokan dengan hitungan manual pada `contoh.py`**
-
-| Query | Hitungan manual | Hasil program |
-| --- | --- | --- |
-| Fungsi dan jumlah parameter | `tambah` 2, `kali` 2, `halo` 0 | Sama |
-| `print(...)` | 2 (baris 8 dan 13) | Sama |
-| Import | `os` (baris 1), `pathlib` (baris 2) | Sama |
-
-**Penjelasan**
-
-- `captures` mengembalikan semua node per nama capture, cocok untuk daftar sederhana. Untuk pasangan nama fungsi dan parameternya saya memakai `matches`, karena dua capture dalam satu pola harus tetap berpasangan.
-- Nama node untuk import tidak ditebak: saya menjalankan `jelajah.py` pada `contoh.py` lebih dulu. Hasilnya `import_statement` (field `name:`) dan `import_from_statement` (field `module_name:`), keduanya berisi `dotted_name`.
-- `import_from_statement` punya dua `dotted_name`: `module_name:` (modul, misalnya `pathlib`) dan `name:` (yang diimpor, misalnya `Path`). Memakai field `module_name:` memastikan hanya modulnya yang tertangkap.
-
 **Kendala:** untuk jumlah parameter, `captures` tidak bisa memasangkan nama fungsi dengan parameternya, jadi saya beralih ke `matches` dan membaca `cap["params"][0].named_child_count`.
 
 **Pengujian batas query import** (`uji_import.py`)
@@ -234,6 +186,10 @@ Bukti warna yang sama dengan capture dari contoh (`true` dan `2` sama-sama cokel
 
 ![api](ss/t6_manual_api.png)
 
+**Keterbatasan query TODO** (`uji/palsu.py`)
+
+![palsu](ss/t6_palsu.png)
+
 **Kendala dan cara mengatasinya**
 
 - Fungsi bersarang dan metode kelas ikut terhitung dalam laporan fungsi panjang, sesuai petunjuk soal. Hal ini dicatat di README.
@@ -246,7 +202,7 @@ Bukti warna yang sama dengan capture dari contoh (`true` dan `2` sama-sama cokel
 | Tugas | Yang diminta | Kesalahan AI | Bukti verifikasi |
 | --- | --- | --- | --- |
 | 1 | Pohon perkiraan untuk fungsi, if/else, kelas, dan kode rusak | (a) Operator `>` pada `comparison_operator` ditulis tanpa label field. Yang benar `operators: [>]`. (b) Pohon `ERROR` pada kode rusak ditulis tanpa node anonim `def`, `(`, `)`, `return`. | Mencetak pohon lengkap dengan program yang menelusuri `node.children` beserta `field_name_for_child`, lalu membandingkannya dengan tulisan AI. Hasilnya berbeda pada dua bagian itu. |
-| 2 | Isi bagian `TODO` pada `jelajah.py` | Tidak ditemukan kesalahan. | Output pada `kecil.py` dan `fungsi.py` sama dengan output yang diberikan di soal. |
+| 2 | Isi bagian `TODO` pada `jelajah.py` dan menyimpan outputnya | Perintah `python jelajah.py ... > output_t2.txt` yang disarankan menyimpan file dalam UTF-16 LE di PowerShell, sehingga teksnya rusak di editor lain. | VS Code menampilkan encoding UTF-16 LE pada `output_t2.txt`; setelah diganti `\| Out-File -Encoding utf8` menjadi UTF-8. Isi output `kecil.py` dan `fungsi.py` sendiri sama dengan output di soal. |
 | 3 | Query fungsi + parameter, `print`, dan import | Query import tidak menangkap `import numpy as np`, karena node-nya `aliased_import`, bukan `dotted_name` langsung. | Menjalankan `query.py` pada `uji_import.py`: 5 modul diimpor, program hanya menampilkan 4 (`numpy` hilang). |
 | 4 | Langkah 4a–4f, `in_expression`, dan `contains_expression` pada grammar `filter` | Grammar tidak menerima angka negatif, karena `number` hanya `/\d+(\.\d+)?/` tanpa tanda minus. | `tree-sitter parse` pada `priority > -1` menghasilkan node `ERROR` di posisi `-` (`ss/t4_negatif.png`). |
 | 5 | Isi `highlights.scm` dan konfigurasi highlight | Contoh capture boolean `@constant.builtin` membuat `true` dan angka `2` berwarna sama di tema bawaan CLI, sehingga token tidak bisa dibedakan. | `tree-sitter highlight contoh.filter` dengan capture itu: `true` dan `2` sama-sama cokelat tebal (`ss/t5_boolean_sama.png`). Diganti `@type.builtin`. |

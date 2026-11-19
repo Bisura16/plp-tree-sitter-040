@@ -153,6 +153,36 @@ Saya menulis query `.scm` dan menjalankannya dengan `QueryCursor` lewat `query.p
 
 Query import belum menangkap `import numpy as np` karena bentuk node-nya `aliased_import`. Ini keterbatasan yang saya temukan, tidak diperbaiki karena di luar yang diminta soal.
 
+## Tugas 4 — Grammar DSL filter
+
+Saya membangun grammar `filter` bertahap di `tree-sitter-filter/` (langkah 4a–4f), lalu menambah `in` dan `contains`. Setiap langkah dicek dengan `tree-sitter generate` dan `tree-sitter parse`, lalu disimpan sebagai kasus uji di `test/corpus/dasar.txt`. Hasil akhir: 8 tes lulus.
+
+**Fitur yang ditambahkan**
+
+| Langkah | Fitur |
+| --- | --- |
+| 4a | Operator `!=`, `>`, `<`, `>=`, `<=` dan `number` |
+| 4b | `_expr`, `and_expression`, dan `word` |
+| 4c | `or_expression` dengan `prec.left` |
+| 4d | `parenthesized` |
+| 4e | `not_expression` dan `boolean` |
+| 4f | `field(...)` pada `comparison`, `and`/`or`, dan `not` |
+| Akhir | `in_expression` (daftar nilai) dan `contains_expression` |
+
+**Prioritas `and` dan `or`.** `a = 1 or b = 2 and c = 3` terbaca sebagai `a = 1 or (b = 2 and c = 3)`, karena `and` diberi prioritas 2 dan `or` prioritas 1. Kurung mengubahnya: `(a = 1 or b = 2) and c = 3` mengelompokkan `or` lebih dulu.
+
+![conflict](ss/t4c_conflict.png)
+
+![parse akhir](ss/t4_parse_akhir.png)
+
+![test](ss/t4_test.png)
+
+**Kendala dan cara mengatasinya**
+
+- `tree-sitter generate` gagal dengan `module is not defined in ES module scope`. Soal memakai `module.exports = grammar(...)`, tetapi CLI 0.27.2 dan `package.json` hasil `init` memakai `"type": "module"`. Saya mengganti menjadi `export default grammar(...)`.
+- `and_expression` di langkah 4b juga menimbulkan `Unresolved conflict` (`a and b and c` bisa dibaca dua cara). Saya menambah `prec.left(2, ...)`. Di langkah 4c konflik yang sama muncul untuk `or`, yang sengaja dialami, dan diselesaikan dengan `prec.left(1, ...)`.
+- Peringatan `You have not configured any parser directories` muncul saat `parse`, tetapi tidak menghalangi hasilnya.
+
 ## Catatan penggunaan AI
 
 | Tugas | Yang diminta | Kesalahan AI | Bukti verifikasi |
@@ -160,5 +190,6 @@ Query import belum menangkap `import numpy as np` karena bentuk node-nya `aliase
 | 1 | Pohon perkiraan untuk fungsi, if/else, kelas, dan kode rusak | (a) Operator `>` pada `comparison_operator` ditulis tanpa label field. Yang benar `operators: [>]`. (b) Pohon `ERROR` pada kode rusak ditulis tanpa node anonim `def`, `(`, `)`, `return`. | Mencetak pohon lengkap dengan program yang menelusuri `node.children` beserta `field_name_for_child`, lalu membandingkannya dengan tulisan AI. Hasilnya berbeda pada dua bagian itu. |
 | 2 | Isi bagian `TODO` pada `jelajah.py` | Tidak ditemukan kesalahan. | Output pada `kecil.py` dan `fungsi.py` sama dengan output yang diberikan di soal. |
 | 3 | Query fungsi + parameter, `print`, dan import | Query import tidak menangkap `import numpy as np`, karena node-nya `aliased_import`, bukan `dotted_name` langsung. | Menjalankan `query.py` pada `uji_import.py`: 5 modul diimpor, program hanya menampilkan 4 (`numpy` hilang). |
+| 4 | Langkah 4a–4f, `in_expression`, dan `contains_expression` pada grammar `filter` | Grammar tidak menerima angka negatif, karena `number` hanya `/\d+(\.\d+)?/` tanpa tanda minus. | `tree-sitter parse` pada `priority > -1` menghasilkan node `ERROR` di posisi `-` (`ss/t4_negatif.png`). |
 
 Catatan: pohon perkiraan tulisan tangan di Tugas 1 dibuat berdasarkan jawaban AI, lalu saya verifikasi dengan menjalankan `t1.py` sendiri.

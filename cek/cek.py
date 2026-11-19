@@ -13,6 +13,15 @@ BATAS_BARIS = 30
 
 SKIP = {"venv", ".venv", ".git", "node_modules", "__pycache__"}
 
+def node_error_pertama(node):
+    if node.is_error or node.is_missing:
+        return node
+    for child in node.children:
+        if child.has_error or child.is_error or child.is_missing:
+            hasil = node_error_pertama(child)
+            if hasil:
+                return hasil
+    return None
 
 def cek_file(path):
     tree = parser.parse(path.read_bytes())
@@ -28,8 +37,12 @@ def cek_file(path):
         if jumlah > BATAS_BARIS:
             nama = cap["nama"][0].text.decode(errors="replace")
             print(f"{path}:{fungsi.start_point[0] + 1}: FUNGSI PANJANG: {nama} ({jumlah} baris)")
-    # Fitur 3 (belum): file yang pohonnya mengandung error
-
+            
+    # Fitur 3: file yang pohonnya mengandung error
+    if tree.root_node.has_error:
+        err = node_error_pertama(tree.root_node)
+        baris = err.start_point[0] + 1 if err else "?"
+        print(f"{path}:{baris}: SINTAKS ERROR")
 
 def main():
     if len(sys.argv) != 2:

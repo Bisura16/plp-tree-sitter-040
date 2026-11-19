@@ -1,1 +1,1 @@
-title contains "invoice"
+title contains "invoice" and not archived = true or priority >= 2 and status in ("open", "pending")

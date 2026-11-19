@@ -84,3 +84,26 @@ not archived = true
     (comparison
       (identifier)
       (boolean))))
+
+==================
+field pada not dan kurung
+==================
+
+(a = 1 or b = 2) and not c = true
+
+---
+
+(query
+  (and_expression
+    left: (parenthesized
+      (or_expression
+        left: (comparison
+          field: (identifier)
+          value: (number))
+        right: (comparison
+          field: (identifier)
+          value: (number))))
+    right: (not_expression
+      operand: (comparison
+        field: (identifier)
+        value: (boolean)))))

@@ -70,3 +70,17 @@ kurung mengubah prioritas
     (comparison
       (identifier)
       (number))))
+
+==================
+not dengan boolean
+==================
+
+not archived = true
+
+---
+
+(query
+  (not_expression
+    (comparison
+      (identifier)
+      (boolean))))

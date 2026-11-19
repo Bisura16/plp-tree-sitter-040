@@ -7,6 +7,7 @@ export default grammar({
     _expr: $ => choice(
       $.comparison, $.and_expression, $.or_expression,
       $.not_expression, $.parenthesized, $.in_expression,
+      $.contains_expression,
     ),
     comparison: $ => seq(
       field('field', $.identifier),
@@ -24,6 +25,11 @@ export default grammar({
       ')',
     ),
     not_expression: $ => prec(3, seq('not', field('operand', $._expr))),
+    contains_expression: $ => seq(
+      field('field', $.identifier),
+      'contains',
+      field('value', $.string),
+    ),
     parenthesized: $ => seq('(', $._expr, ')'),
     _value: $ => choice($.string, $.number, $.boolean),
     boolean: $ => choice('true', 'false'),

@@ -107,3 +107,18 @@ field pada not dan kurung
       operand: (comparison
         field: (identifier)
         value: (boolean)))))
+
+==================
+in dengan tiga nilai string
+==================
+
+status in ("open", "pending", "closed")
+
+---
+
+(query
+  (in_expression
+    field: (identifier)
+    value: (string)
+    value: (string)
+    value: (string)))

@@ -1,1 +1,1 @@
-(a = 1 or b = 2) and not c = true
+status in ("open", "pending", "closed")

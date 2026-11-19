@@ -1,0 +1,3 @@
+﻿@nama  baris 4: tambah
+@nama  baris 7: kali
+@nama  baris 11: halo

@@ -183,6 +183,36 @@ Saya membangun grammar `filter` bertahap di `tree-sitter-filter/` (langkah 4a–
 - `and_expression` di langkah 4b juga menimbulkan `Unresolved conflict` (`a and b and c` bisa dibaca dua cara). Saya menambah `prec.left(2, ...)`. Di langkah 4c konflik yang sama muncul untuk `or`, yang sengaja dialami, dan diselesaikan dengan `prec.left(1, ...)`.
 - Peringatan `You have not configured any parser directories` muncul saat `parse`, tetapi tidak menghalangi hasilnya.
 
+## Tugas 5 — Highlight untuk DSL filter
+
+Saya membuat `queries/highlights.scm` untuk grammar `filter`, lalu memeriksanya dengan `tree-sitter highlight contoh.filter`. Konfigurasi yang dibutuhkan: `tree-sitter init-config` dengan `parser-directories` berisi folder induk `tree-sitter-filter/`, dan `"highlights": "queries/highlights.scm"` di `tree-sitter.json` (`file-types` sudah berisi `"filter"`).
+
+**Captures yang dipakai**
+
+| Token | Capture |
+| --- | --- |
+| `and`, `or`, `not`, `in`, `contains` | `@keyword` |
+| `=`, `!=`, `>`, `<`, `>=`, `<=` | `@operator` |
+| string | `@string` |
+| angka | `@number` |
+| boolean | `@type.builtin` |
+| nama field (di `comparison`, `in_expression`, `contains_expression`) | `@property` |
+| `(` `)` dan `,` | `@punctuation.bracket`, `@punctuation.delimiter` |
+
+Hasil `tree-sitter highlight contoh.filter` pada `title contains "invoice" and not archived = true or priority >= 2 and status in ("open", "pending")`. Setiap jenis token punya warna berbeda:
+
+![highlight](ss/t5_highlight.png)
+
+**Kendala dan cara mengatasinya**
+
+- `tree-sitter highlight` gagal dengan `The system cannot find the path specified`, karena `highlights.scm` tersimpan di `bindings/python/tree_sitter_filter/queries/`. CLI mencari di `tree-sitter-filter/queries/`, jadi file saya pindahkan ke sana.
+- Entri terakhir `parser-directories` di `config.json` tanpa koma membuat JSON tidak valid. Saya merapikannya menjadi satu entri berisi folder induk.
+- Contoh di soal memakai `@constant.builtin` untuk boolean, tetapi di tema bawaan CLI warnanya sama dengan `@number`. Saya menggantinya dengan `@type.builtin` supaya tiap jenis token punya warna berbeda.
+
+Bukti warna yang sama dengan capture dari contoh (`true` dan `2` sama-sama cokelat tebal):
+
+![boolean sama](ss/t5_boolean_sama.png)
+
 ## Catatan penggunaan AI
 
 | Tugas | Yang diminta | Kesalahan AI | Bukti verifikasi |
@@ -191,5 +221,6 @@ Saya membangun grammar `filter` bertahap di `tree-sitter-filter/` (langkah 4a–
 | 2 | Isi bagian `TODO` pada `jelajah.py` | Tidak ditemukan kesalahan. | Output pada `kecil.py` dan `fungsi.py` sama dengan output yang diberikan di soal. |
 | 3 | Query fungsi + parameter, `print`, dan import | Query import tidak menangkap `import numpy as np`, karena node-nya `aliased_import`, bukan `dotted_name` langsung. | Menjalankan `query.py` pada `uji_import.py`: 5 modul diimpor, program hanya menampilkan 4 (`numpy` hilang). |
 | 4 | Langkah 4a–4f, `in_expression`, dan `contains_expression` pada grammar `filter` | Grammar tidak menerima angka negatif, karena `number` hanya `/\d+(\.\d+)?/` tanpa tanda minus. | `tree-sitter parse` pada `priority > -1` menghasilkan node `ERROR` di posisi `-` (`ss/t4_negatif.png`). |
+| 5 | Isi `highlights.scm` dan konfigurasi highlight | Contoh capture boolean `@constant.builtin` membuat `true` dan angka `2` berwarna sama di tema bawaan CLI, sehingga token tidak bisa dibedakan. | `tree-sitter highlight contoh.filter` dengan capture itu: `true` dan `2` sama-sama cokelat tebal (`ss/t5_boolean_sama.png`). Diganti `@type.builtin`. |
 
 Catatan: pohon perkiraan tulisan tangan di Tugas 1 dibuat berdasarkan jawaban AI, lalu saya verifikasi dengan menjalankan `t1.py` sendiri.

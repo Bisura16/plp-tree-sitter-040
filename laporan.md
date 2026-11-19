@@ -22,7 +22,7 @@ Saya mem-parse empat potongan kode Python dengan `t1.py` dan mencetak `tree.root
 
 **Pohon perkiraan tulisan tangan**
 
-![tulisan tangan](ss/t1_tulisan_tangan.jpg)
+![tulisan tangan](ss/t1_tulisan_tangan_perkiraan.jpeg)
 
 **Penjelasan**
 
